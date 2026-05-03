@@ -5,20 +5,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gradient-to-br from-gray-100 to-blue-100 min-h-screen flex items-center justify-center">
+<body class="bg-gradient-to-br from-slate-100 via-blue-100 to-indigo-200 min-h-screen flex items-center justify-center">
 
-<div class="bg-white shadow-2xl rounded-2xl w-full max-w-3xl p-6">
+<div class="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl w-full max-w-3xl p-8 border border-white/40">
 
-    <h1 class="text-2xl font-bold text-center mb-6">
+    <!-- TITLE -->
+    <h1 class="text-3xl font-extrabold text-center mb-6 text-gray-800">
         Cat vs Dog AI Classifier
     </h1>
 
-    <!-- TAB BUTTONS -->
-    <div class="flex justify-center gap-2 mb-6">
-        <button onclick="showTab('predict')" class="tab-btn bg-blue-500 text-white px-4 py-2 rounded-lg">
+    <!-- TAB -->
+    <div class="flex justify-center gap-3 mb-6">
+        <button onclick="showTab('predict')" class="tab-btn px-5 py-2 rounded-full bg-blue-600 text-white shadow-md hover:scale-105 transition">
             Predict
         </button>
-        <button onclick="showTab('history')" class="tab-btn bg-gray-200 px-4 py-2 rounded-lg">
+        <button onclick="showTab('history')" class="tab-btn px-5 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition">
             History
         </button>
     </div>
@@ -31,19 +32,25 @@
             <input type="file"
                 id="imageInput"
                 accept="image/*"
-                class="w-full border p-2 rounded-lg mb-4"
+                class="w-full border border-gray-300 p-3 rounded-xl mb-4 bg-white shadow-sm"
                 onchange="previewImage(event)">
 
-            <img id="preview" class="rounded-xl mx-auto shadow-md max-h-72 mb-4 hidden">
+            <div class="flex justify-center">
+                <img id="preview"
+                    class="rounded-2xl shadow-lg max-h-72 mb-4 hidden border">
+            </div>
 
             <button onclick="predict()"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg w-full">
-                Predict
+                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:scale-[1.02] transition">
+                Predict Image
             </button>
 
-            <div class="mt-4">
-                <h2 id="result" class="text-xl font-bold">Result: -</h2>
-                <p id="confidence" class="text-gray-500">Confidence: -</p>
+            <!-- RESULT BOX -->
+            <div class="mt-6 p-4 rounded-2xl bg-gray-100 shadow-inner">
+
+                <h2 id="result" class="text-2xl font-bold text-gray-800">Result: -</h2>
+                <p id="confidence" class="text-gray-600 mt-1">Confidence: -</p>
+
             </div>
 
         </div>
@@ -53,10 +60,12 @@
     <!-- HISTORY -->
     <div id="history" class="tab hidden">
 
-        <h2 class="text-lg font-bold mb-3">Prediction History</h2>
+        <h2 class="text-lg font-bold mb-4 text-gray-700">Prediction History</h2>
 
         <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto">
+
             <p class="text-gray-400 text-sm">No history yet</p>
+
         </div>
 
     </div>
@@ -67,27 +76,30 @@
 
 let selectedFile = null;
 
-/*  TAB  */
+/* TAB */
 const showTab = (tabName) => {
 
     document.querySelectorAll(".tab").forEach(t => t.classList.add("hidden"));
     document.getElementById(tabName).classList.remove("hidden");
 
     document.querySelectorAll(".tab-btn").forEach(b => {
-        b.classList.remove("bg-blue-500", "text-white");
+        b.classList.remove("bg-blue-600", "text-white", "shadow-md");
         b.classList.add("bg-gray-200");
     });
 
-    event.target.classList.add("bg-blue-500", "text-white");
+    event.target.classList.add("bg-blue-600", "text-white", "shadow-md");
     event.target.classList.remove("bg-gray-200");
 };
 
-/*  PREVIEW  */
+/* PREVIEW */
 const previewImage = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     selectedFile = file;
+
+    document.getElementById("result").innerText = "Result: -";
+    document.getElementById("confidence").innerText = "Confidence: -";
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -99,7 +111,7 @@ const previewImage = (event) => {
     reader.readAsDataURL(file);
 };
 
-/*  HISTORY  */
+/* HISTORY */
 const addHistory = (imageSrc, prediction, confidence) => {
 
     const list = document.getElementById("historyList");
@@ -109,20 +121,20 @@ const addHistory = (imageSrc, prediction, confidence) => {
     }
 
     const item = document.createElement("div");
-    item.className = "flex items-center gap-3 border p-2 rounded-lg bg-gray-50";
+    item.className = "flex items-center gap-4 bg-white p-3 rounded-xl shadow-md border";
 
     item.innerHTML = `
-        <img src="${imageSrc}" class="w-12 h-12 rounded object-cover">
+        <img src="${imageSrc}" class="w-14 h-14 rounded-lg object-cover border">
         <div>
-            <p class="font-semibold">${prediction}</p>
-            <p class="text-xs text-gray-500">${confidence}%</p>
+            <p class="font-semibold text-gray-800">${prediction}</p>
+            <p class="text-sm text-gray-500">Confidence: ${confidence}%</p>
         </div>
     `;
 
     list.prepend(item);
 };
 
-/*  PREDICT  */
+/* PREDICT */
 const predict = () => {
 
     if (!selectedFile) {
