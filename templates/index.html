@@ -5,84 +5,132 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gradient-to-br from-gray-100 to-blue-100 min-h-screen flex items-center justify-center">
 
-    <div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md text-center">
+<div class="bg-white shadow-2xl rounded-2xl w-full max-w-3xl p-6">
 
-        <h2 class="text-2xl font-bold mb-4">
-            Cat vs Dog AI Classifier
-        </h2>
+    <h1 class="text-2xl font-bold text-center mb-6">
+        Cat vs Dog AI Classifier
+    </h1>
 
-        <!-- INPUT -->
-        <input
-            type="file"
-            id="imageInput"
-            accept="image/*"
-            class="w-full border p-2 rounded-lg mb-4"
-            onchange="previewImage(event)"
-        >
-
-        <!-- PREVIEW -->
-        <img
-            id="preview"
-            class="rounded-lg mx-auto shadow-md max-h-64 mb-4 hidden"
-        >
-
-        <!-- BUTTON -->
-        <button
-            onclick="predict()"
-            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
-        >
-            Prediksi
+    <!-- TAB BUTTONS -->
+    <div class="flex justify-center gap-2 mb-6">
+        <button onclick="showTab('predict')" class="tab-btn bg-blue-500 text-white px-4 py-2 rounded-lg">
+            Predict
         </button>
+        <button onclick="showTab('history')" class="tab-btn bg-gray-200 px-4 py-2 rounded-lg">
+            History
+        </button>
+    </div>
 
-        <hr class="my-4">
+    <!-- PREDICT -->
+    <div id="predict" class="tab">
 
-        <!-- RESULT -->
-        <h3 id="result" class="text-xl font-semibold">
-            Hasil: -
-        </h3>
+        <div class="text-center">
 
-        <p id="confidence" class="text-gray-600">
-            Confidence: -
-        </p>
+            <input type="file"
+                id="imageInput"
+                accept="image/*"
+                class="w-full border p-2 rounded-lg mb-4"
+                onchange="previewImage(event)">
+
+            <img id="preview" class="rounded-xl mx-auto shadow-md max-h-72 mb-4 hidden">
+
+            <button onclick="predict()"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg w-full">
+                Predict
+            </button>
+
+            <div class="mt-4">
+                <h2 id="result" class="text-xl font-bold">Result: -</h2>
+                <p id="confidence" class="text-gray-500">Confidence: -</p>
+            </div>
+
+        </div>
 
     </div>
+
+    <!-- HISTORY -->
+    <div id="history" class="tab hidden">
+
+        <h2 class="text-lg font-bold mb-3">Prediction History</h2>
+
+        <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto">
+            <p class="text-gray-400 text-sm">No history yet</p>
+        </div>
+
+    </div>
+
+</div>
 
 <script>
 
 let selectedFile = null;
 
-// PREVIEW
-function previewImage(event) {
-    let file = event.target.files[0];
+/*  TAB  */
+const showTab = (tabName) => {
 
+    document.querySelectorAll(".tab").forEach(t => t.classList.add("hidden"));
+    document.getElementById(tabName).classList.remove("hidden");
+
+    document.querySelectorAll(".tab-btn").forEach(b => {
+        b.classList.remove("bg-blue-500", "text-white");
+        b.classList.add("bg-gray-200");
+    });
+
+    event.target.classList.add("bg-blue-500", "text-white");
+    event.target.classList.remove("bg-gray-200");
+};
+
+/*  PREVIEW  */
+const previewImage = (event) => {
+    const file = event.target.files[0];
     if (!file) return;
 
     selectedFile = file;
 
-    document.getElementById("result").innerText = "Hasil: -";
-    document.getElementById("confidence").innerText = "Confidence: -";
-
-    let reader = new FileReader();
-
-    reader.onload = function(e) {
-        let img = document.getElementById("preview");
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = document.getElementById("preview");
         img.src = e.target.result;
         img.classList.remove("hidden");
-    }
+    };
 
     reader.readAsDataURL(file);
-}
+};
 
-// PREDICT
-function predict() {
+/*  HISTORY  */
+const addHistory = (imageSrc, prediction, confidence) => {
+
+    const list = document.getElementById("historyList");
+
+    if (list.innerText.includes("No history yet")) {
+        list.innerHTML = "";
+    }
+
+    const item = document.createElement("div");
+    item.className = "flex items-center gap-3 border p-2 rounded-lg bg-gray-50";
+
+    item.innerHTML = `
+        <img src="${imageSrc}" class="w-12 h-12 rounded object-cover">
+        <div>
+            <p class="font-semibold">${prediction}</p>
+            <p class="text-xs text-gray-500">${confidence}%</p>
+        </div>
+    `;
+
+    list.prepend(item);
+};
+
+/*  PREDICT  */
+const predict = () => {
+
     if (!selectedFile) {
-        alert("Pilih gambar dulu!");
+        alert("Please select an image first");
         return;
     }
 
-    let formData = new FormData();
+    const formData = new FormData();
     formData.append("image", selectedFile);
 
     fetch("/predict", {
@@ -93,18 +141,19 @@ function predict() {
     .then(data => {
 
         document.getElementById("result").innerText =
-            "Hasil: " + data.prediction;
+            "Result: " + data.prediction;
 
         document.getElementById("confidence").innerText =
             "Confidence: " + data.confidence + "%";
 
-        // tampilkan gambar dari server
-        let img = document.getElementById("preview");
+        const img = document.getElementById("preview");
         img.src = data.image_url;
         img.classList.remove("hidden");
+
+        addHistory(data.image_url, data.prediction, data.confidence);
     })
     .catch(err => console.error(err));
-}
+};
 
 </script>
 
